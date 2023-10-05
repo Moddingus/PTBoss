@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project Sdk="Microsoft.NET.Sdk">
+  <Import Project="..\tModLoader.targets" />
+  <PropertyGroup>
+    <AssemblyName>TopHatCatBoss</AssemblyName>
+    <TargetFramework>net6.0</TargetFramework>
+    <PlatformTarget>AnyCPU</PlatformTarget>
+    <LangVersion>latest</LangVersion>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="tModLoader.CodeAssist" Version="0.1.*" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Remove="NPCs\" />
+    <None Remove="Items\" />
+    <None Remove="CatBoss\Assets\" />
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="NPCs\" />
+    <Folder Include="Items\" />
+    <Folder Include="CatBoss\Assets\" />
+  </ItemGroup>
+</Project>
