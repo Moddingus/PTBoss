@@ -15,14 +15,11 @@ namespace TopHatCatBoss
             if (Main.netMode != NetmodeID.Server)
             {
                 Ref<Effect> Shockwave = new Ref<Effect>(ModContent.Request<Effect>("TopHatCatBoss/CatBoss/Assets/Shockwave", AssetRequestMode.ImmediateLoad).Value);
-                Ref<Effect> RedScreen = new Ref<Effect>(ModContent.Request<Effect>("TopHatCatBoss/CatBoss/Assets/Shader2", AssetRequestMode.ImmediateLoad).Value);
+                
 
 
                 Filters.Scene["Shockwave"] = new Filter(new ScreenShaderData(Shockwave, "Shockwave"), EffectPriority.VeryHigh);
                 Filters.Scene["Shockwave"].Load();
-
-                Filters.Scene["Red"] = new Filter(new ScreenShaderData(RedScreen, "FilterMyShader"), EffectPriority.VeryHigh);
-                Filters.Scene["Red"].Load();
             }
         }
     }

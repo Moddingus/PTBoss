@@ -17,6 +17,7 @@ using Terraria.Audio;
 using Terraria.GameContent.Bestiary;
 using Terraria.GameContent.ItemDropRules;
 using Terraria.Graphics.CameraModifiers;
+using static Humanizer.In;
 
 namespace TopHatCatBoss.CatBoss
 {
@@ -46,20 +47,45 @@ namespace TopHatCatBoss.CatBoss
             Projectile.friendly = false;
             Projectile.scale = 1.5f;
             Projectile.tileCollide = false;
-            Projectile.alpha = 100;
+            Projectile.Opacity = 0;
             Projectile.damage = 0;
         }
         private ref float timer => ref Projectile.ai[0];
-        private int laserIndex;
-        public int attackStyle
+        private int[] laserIndex = new int[4];
+        public int attackStyle;
+        public Vector2 centerPoint;
+        public Vector2 aDirection;
+        public int entranceDelay;
+        public override void SendExtraAI(BinaryWriter writer)
+        {
+            writer.WriteVector2(aDirection);
+            writer.Write(entranceDelay);
+            writer.Write(attackStyle);
+            writer.WriteVector2(centerPoint);
+        }
+        public override void ReceiveExtraAI(BinaryReader reader)
+        {
+            aDirection = reader.ReadVector2();
+            entranceDelay = reader.Read();
+            attackStyle = reader.Read();
+            centerPoint = reader.ReadVector2();
+        }
+        public override bool PreAI() => --entranceDelay <= 0;
+
         public override void AI()
         {
+            Projectile.Opacity = 1;
             AttackType AttackType = (AttackType)Projectile.ai[1];
             NPC owner = Main.npc[(int)Projectile.ai[2]];
+            if (!owner.active)
+            {
+                Projectile.timeLeft = 2;
+            }
             timer++;
             Projectile.alpha = (int)Math.Clamp(Projectile.alpha - timer * 3, 0, 255);
             Projectile.frame = 0;
 
+            staffAttack(owner);
             switch (AttackType)
             {
                 case AttackType.Book:  
@@ -67,29 +93,83 @@ namespace TopHatCatBoss.CatBoss
                 case AttackType.Sword:
                     break;
                 default:
+                    break;
+            }
+            
+        }
+        private void bookAttack()
+        {
+
+        }
+        private void swordAttack()
+        {
+
+        }
+        private void staffAttack(NPC owner)
+        {
+            switch (attackStyle)
+            {
+                case 1:
                     int i = 30;
-                    
-                    if (timer < i)
+
+                    if (timer == 1)
                     {
-                        Projectile.velocity = Projectile.velocity.RotatedBy(MathHelper.Pi / (i - 1));
+                        Projectile.velocity = Projectile.DirectionTo(centerPoint) * 16;
                     }
-                    if (timer == i + 5)
+                    if (timer == 10)
                     {
-                        Projectile.velocity *= 0.5f;
-                        laserIndex = Projectile.NewProjectile(Projectile.GetSource_FromAI(), Projectile.Center, -Vector2.UnitY, ModContent.ProjectileType<BossLaser>(), 100, 5, -1, 0, Projectile.whoAmI + Main.maxNPCs, 20);
+                        Projectile.velocity = Vector2.Zero;
+                        Projectile.velocity = -Vector2.UnitY * 2.5f;
+                        for (int ii = 0; ii < 4; ii++)
+                        {
+                            laserIndex[i] = Projectile.NewProjectile(Projectile.GetSource_FromAI(), Projectile.Center, aDirection.RotatedBy(MathHelper.PiOver4 * i), ModContent.ProjectileType<BossLaser>(), 100, 5, -1, 0, Projectile.whoAmI + Main.maxNPCs, 20);
+                        }
                     }
-                    if (timer >= i + 150)
+                    if (timer == 60)
                     {
-                        Main.projectile[laserIndex].Kill();
-                        Projectile.velocity = Projectile.DirectionTo(owner.Center) * 10;
+                        Main.projectile[laserIndex[0]].Kill();
+                        Projectile.Kill();
                     }
-                    if (Projectile.WithinRange(owner.Center, 20) && timer > i + 150)
+                    break;
+                case 3:
+
+                    int i2 = 5;
+
+                    if (timer < i2)
+                    {
+                        Projectile.velocity = Projectile.Center.DirectionTo(centerPoint) * 15;
+                    }
+                    if (timer > i2 && timer < i2 + 10)
+                    {
+                        Projectile.velocity *= 0.25f;
+                    }
+                    if (timer == i2 + 4)
+                    {
+                        laserIndex[0] = Projectile.NewProjectile(Projectile.GetSource_FromAI(), Projectile.Center, Projectile.Center.DirectionTo(centerPoint), ModContent.ProjectileType<BossLaser>(), 100, 5, -1, 0, Projectile.whoAmI + Main.maxNPCs, 20);
+                    }
+                    if (timer == i2 + 30)
+                    {
+                        Main.projectile[laserIndex[0]].Kill();
+                    }
+                    if (timer == i2 + 34)
+                    {
+                        Projectile.velocity = Projectile.Center.DirectionTo(centerPoint) * -15;
+                    }
+                    if (timer == i2 + 80)
                     {
                         Projectile.Kill();
                     }
                     break;
             }
-            
+
+        }
+        private void gunAttack()
+        {
+
+        }
+        private void whipAttack()
+        {
+
         }
         public override bool? Colliding(Rectangle projHitbox, Rectangle targetHitbox)
         {
@@ -105,7 +185,7 @@ namespace TopHatCatBoss.CatBoss
             {
                 float percent = i / tl;
                 Vector2 dpos = Projectile.oldPos[(int)i] - Main.screenPosition + t.center() * Projectile.scale - Vector2.UnitY * 12;
-                Main.spriteBatch.Draw(t, dpos, source, Color.Purple * (1 - percent), Projectile.rotation, t.center(), Projectile.scale, SpriteEffects.None, 0);
+                Main.spriteBatch.Draw(t, dpos, source, Color.Purple * (1 - percent) * Projectile.Opacity, Projectile.rotation, t.center(), Projectile.scale, SpriteEffects.None, 0);
             }
             return true;
         }

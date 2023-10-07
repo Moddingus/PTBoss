@@ -4,4 +4,5 @@ Projectiles: {
 	gss.DisplayName: gss
 	BossLaser.DisplayName: Boss Laser
 	BossClone.DisplayName: Boss Clone
+	Bolt.DisplayName: Bolt
 }

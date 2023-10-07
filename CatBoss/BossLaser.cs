@@ -61,7 +61,6 @@ namespace TopHatCatBoss.CatBoss
         }
         public override bool? Colliding(Rectangle projHitbox, Rectangle targetHitbox)
         {
-            
             return Collision.CheckAABBvLineCollision(new Vector2(targetHitbox.X, targetHitbox.Y), new Vector2(targetHitbox.Width, targetHitbox.Height), Projectile.Center, Projectile.Center + Vector2.Normalize(Projectile.velocity) * BEAMLEN);
         }
         public override void AI()
@@ -86,7 +85,7 @@ namespace TopHatCatBoss.CatBoss
             Vector2 dir = Vector2.Normalize(Projectile.velocity);
             Vector2 dpos = Projectile.Center - Main.screenPosition;
             Texture2D texture = ModContent.Request<Texture2D>("TopHatCatBoss/CatBoss/Assets/Beam").Value;
-            Rectangle start = new(0, 0, 26, 22); //replace with texture dimensions
+            Rectangle start = new(0, 0, 26, 22); 
             Rectangle mid = new(0, 24, 23, 30);
             Rectangle end = new(0, 54, 26, 22);
 

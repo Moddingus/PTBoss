@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Runtime.Serialization.Formatters;
 using Microsoft.CodeAnalysis;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
@@ -17,7 +18,7 @@ using static tModPorter.ProgressUpdate;
 
 namespace TopHatCatBoss.CatBoss
 {
-    
+
     public enum AttackType
     {
         Gun,
@@ -57,7 +58,7 @@ namespace TopHatCatBoss.CatBoss
         private AttackType AtkType
         {
             get => (AttackType)Bussy2;
-            set => Bussy = (uint)value;
+            set => Bussy2 = (uint)value;
         }
 
         private ref float timer => ref NPC.ai[0];
@@ -201,7 +202,6 @@ namespace TopHatCatBoss.CatBoss
                 Filters.Scene["Shockwave"].Deactivate();
                 ShaderTimer = 0;
             }
-            //Main.NewText($"Shockwave Active: {Filters.Scene["Shockwave"].IsActive()}, Red Active: {Filters.Scene["Red"].IsActive()}");
 
             ShaderTimer++;
             timer++;
@@ -259,21 +259,17 @@ namespace TopHatCatBoss.CatBoss
             {
                 NPC.velocity = Vector2.Zero;
             }
-            if (Main.netMode != NetmodeID.Server && !Filters.Scene["Red"].IsActive())
-            {
-                //Filters.Scene.Activate("Shockwave", NPC.Center).GetShader().UseColor(3, 5, 15).UseTargetPosition(NPC.Center);
-            }
 
             if (timer > 120)
             {
-                Filters.Scene.Deactivate("Red");
                 timer = 0;
-                AtkType = ModdingusUtils.RandomFromEnum<AttackType>();
+                AtkType = AttackType.Book; //ModdingusUtils.RandomFromEnum<AttackType>();
                 AIState = ActionState.Attack;
             }
         }
         public void Attack()
         {
+            Player target = Main.player[NPC.target];
 
             if (timer > 0)
             {
@@ -294,28 +290,55 @@ namespace TopHatCatBoss.CatBoss
                             AIState = ActionState.Choose;
                         }
                         break;
-                    case AttackType.Staff:
-                        if (timer % 60 == 0)
-                        {
-                            for (int i = 0; i < 12; i++)
-                            {
-                                Vector2 pos = NPC.Center + Vector2.One.RotatedBy(MathHelper.TwoPi / 12 * i + (timer / 60) / 3) * 30;
-                                Projectile.NewProjectile(NPC.GetSource_FromAI(), pos, NPC.Center.DirectionTo(pos) * 15, ModContent.ProjectileType<gss>(), 220, 5);
-                            }
+                    case AttackType.Gun:
+                        if (timer == 1) {
+                            
                         }
-                        if (timer == 360)
+                        if (timer < 130)
                         {
-                            timer = 0;
-                            AIState = ActionState.Choose;
+                            Vector2 direction = Vector2.One.RotatedBy(Main.rand.NextFloat(0, MathHelper.TwoPi));
                         }
                         break;
                     default:
                         if (timer == 1)
                         {
-                            createClone(NPC.Center, 1);
-                            Main.NewText("done");
+                            Vector2 nextPos = ModdingusUtils.randomCorner() * 400;
+                            for (int i = 0; i < 3; i++)
+                            {
+                                Vector2 clonePos(int i)
+                                {
+                                    return i switch
+                                    {
+                                        0 => new Vector2(-1, 1),
+                                        1 => new Vector2(-1, -1),
+                                        _ => new Vector2(1, -1),
+                                    };
+                                }
+                                var a = createClone(target.Center + nextPos * clonePos(i), 3, target.Center);
+                                a.entranceDelay = (i + 1) * 25;
+                            }
                             Vector2 pos = NPC.Center + Vector2.UnitX * 20 * NPC.direction;
-                            Projectile.NewProjectile(NPC.GetSource_FromAI(), pos, NPC.Center.DirectionTo(pos), ModContent.ProjectileType<BossLaser>(), 220, 5, -1, 0, NPC.whoAmI, 20);
+                            NPC.Center = target.Center + nextPos;
+                            NPC.velocity = NPC.DirectionTo(target.Center) * 5;
+                        }
+                        if (timer > 5 && timer < 10)
+                        {
+                            NPC.velocity *= 0.25f;
+                        }
+                        if (timer == 9)
+                        {
+                            int a = Projectile.NewProjectile(NPC.GetSource_FromAI(), NPC.Center, NPC.velocity, ModContent.ProjectileType<BossLaser>(), 100, 5, -1, 0, NPC.whoAmI, 20);
+                            Main.projectile[a].timeLeft = 26;
+                        }
+                        if (timer == 35)
+                        {
+                            NPC.Center = (target.Center + Vector2.UnitX * 300 * ModdingusUtils.PoN1() - Vector2.UnitY * 50);
+                        }
+                        if (timer == 80)
+                        {
+                            NPC.velocity = Vector2.Zero;
+                            var c = createClone(NPC.Center, 1, NPC.Center + Vector2.UnitY * 50);
+                            c.aDirection = Vector2.UnitX * NPC.getDirection();
                         }
                         if (timer == 360)
                         {
@@ -350,10 +373,6 @@ namespace TopHatCatBoss.CatBoss
                 //spriteBatch.Draw(t, dpos, source, Color.Purple * (1 - percent), NPC.rotation, NPC.origin(), NPC.scale, SpriteEffects.None, 0);
             }
             switch (AIState) //shit code
-            ///STAKEHOLDERS:
-            ///government
-            ///supppliers
-            ///consumers
             {
                 case ActionState.Choose:
                     float opacity(int i)
@@ -365,7 +384,15 @@ namespace TopHatCatBoss.CatBoss
                     }
                     Vector2 offset(int i)
                     {
-                        switch (i) { case 1: return Vector2.Zero; case 2: return new Vector2(-30, -15); case 4: return Vector2.Zero; case 5: return Vector2.UnitX * -5; default: return Vector2.Zero; };
+                        return i switch
+                        {
+                            1 => Vector2.Zero,
+                            2 => new Vector2(-30, -15),
+                            4 => Vector2.Zero,
+                            5 => Vector2.UnitX * -5,
+                            _ => Vector2.Zero,
+                        };
+                        ;
                     }
                     float scale(int i)
                     {
@@ -427,10 +454,14 @@ namespace TopHatCatBoss.CatBoss
             }
             return true;
         }
-        private void createClone(Vector2 pos, int attackStyle)
+        private BossClone createClone(Vector2 pos, int attackStyle, Vector2 center = new Vector2())
         {
-            int a = Projectile.NewProjectile(NPC.GetSource_FromAI(), pos, Vector2.UnitX * 5, ModContent.ProjectileType<BossClone>(), 0, 0, -1, 0, (float)(AtkType)+1 + attackStyled);
-            (Main.npc[a].ModNPC as BossClone).
+            int a = Projectile.NewProjectile(NPC.GetSource_FromAI(), pos, Vector2.Zero, ModContent.ProjectileType<BossClone>(), 0, 0, -1, 0, (float)(AtkType));
+            var b = (Main.projectile[a].ModProjectile as BossClone);
+            b.attackStyle = attackStyle;
+            b.centerPoint = center;
+
+            return b;
         }
     }
     public class MCameraModifiers : ModSystem
@@ -440,7 +471,6 @@ namespace TopHatCatBoss.CatBoss
             seconds = seconds * 60;
             PunchCameraModifier modifier = new PunchCameraModifier(start, (Main.rand.NextFloat() * ((float)Math.PI * 2f)).ToRotationVector2(), strength, 6f, (int)seconds, 1000f, FullName);
             Main.instance.CameraModifiers.Add(modifier);
-
         }
     }
     public static class ModdingusUtils
@@ -474,6 +504,132 @@ namespace TopHatCatBoss.CatBoss
         public static Vector2 random(this Rectangle rect)
         {
             return new Vector2(Main.rand.NextFloat(rect.X, rect.X + rect.Width), Main.rand.NextFloat(rect.Y, rect.Y + rect.Height));
+        }
+        public static Vector2 randomCorner()
+        {
+            return new Vector2(PoN1(), PoN1());
+        }
+        public static int PoN1()
+        {
+            return Main.rand.NextBool() ? -1 : 1;
+        }
+        public static void DrawTriangle(SpriteBatch spriteBatch, Triangle t)
+        {
+            Texture2D tex = TextureAssets.MagicPixel.Value;
+            spriteBatch.Draw(tex, new Rectangle((int)(t.A.X-Main.screenPosition.X), (int)(t.A.Y - Main.screenPosition.Y), (int)t.AB, 1),tex.source(),Color.Red, t.BAC/2, Vector2.Zero, SpriteEffects.None, 0);
+            spriteBatch.Draw(tex, new Rectangle((int)(t.A.X - Main.screenPosition.X), (int)(t.A.Y - Main.screenPosition.Y), (int)t.AC, 1), tex.source(), Color.Red, -t.BAC / 2, Vector2.Zero, SpriteEffects.None, 0);
+            spriteBatch.Draw(tex, new Rectangle((int)(t.C.X - Main.screenPosition.X), (int)(t.C.Y - Main.screenPosition.Y), (int)t.BC, 1), tex.source(), Color.Red, t.ACB / 2, Vector2.Zero, SpriteEffects.None, 0);
+        }
+        /// <summary>
+        /// Looks for a Player in a cone towards the projectile's velocity. Ignores hostility (de)buffs (eg. Putrid Scent, Beetle Armor)
+        /// </summary>
+        /// <param name="projectile"></param>
+        /// <param name="MaxAngle"></param>
+        /// <returns>The index of the closest player who meets requirements or -1 if no player is found</returns>
+        public static int FindPlayerInLineOfSight(this Projectile projectile, float MaxAngle, float MaxRange)
+        {
+            Vector2 b = projectile.Center + Vector2.Normalize(projectile.velocity).RotatedBy(MaxAngle) * MaxRange;
+            Vector2 c = projectile.Center + Vector2.Normalize(projectile.velocity).RotatedBy(-MaxAngle) * MaxRange;
+            Triangle t = new Triangle(projectile.Center, b, c);
+
+            int temp = -1;
+            for (int i = 0; i < Main.maxPlayers; i++)
+            {
+                var target = Main.player[i];
+
+                if (t.Contains(target.Center) && target.Distance(projectile.Center) < target.Distance(projectile.Center))
+                {
+                    temp = i;
+                }
+            }
+            return temp;
+        }
+    }
+    public struct Triangle : IEquatable<Triangle>
+    {
+        public Vector2 A;
+        public Vector2 B;
+        public Vector2 C;
+
+        readonly public float AB;
+        readonly public float BC;
+        readonly public float AC;
+
+        readonly public float ABC;
+        readonly public float BAC;
+        readonly public float ACB;
+
+        readonly public float area;
+
+        public Triangle(Vector2 a, Vector2 b, Vector2 c)
+        {
+            A = a;
+            B = b;
+            C = c;
+
+            AB = A.Distance(B);
+            BC = B.Distance(C);
+            AC = A.Distance(C);
+
+            ABC = (float)Math.Acos(AB * AB + AC * AC - BC * BC) / 2 * AC * AB;
+            BAC = (float)Math.Acos(AB * AB + BC * BC - AC * AC) / 2 * BC * AB;
+            ACB = (float)Math.Acos(AC * AC + BC * BC - AB * AB) / 2 * AC * BC;
+
+            area = (float)Math.Abs((A.X * (B.Y - C.Y) +
+                                         B.X * (C.Y - A.Y) +
+                                         C.X * (A.Y - B.Y)) / 2f);
+        }
+        public float Area(Vector2 _A, Vector2 _B, Vector2 _C)
+        {
+            return Math.Abs((_A.X * (_B.Y - _C.Y) +
+                         _B.X * (_C.Y - _A.Y) +
+                         _C.X * (_A.Y - _B.Y)) / 2f);
+        }
+        public override bool Equals(object obj)
+        {
+            if (obj is Triangle)
+            {
+                return Equals((Triangle)obj);
+            }
+            return false;
+        }
+        public bool Contains(Vector2 p)
+        {
+            double a1 = Area(p, B, C);
+
+            double a2 = Area(A, p, C);
+
+            double a3 = Area(A, B, p);
+
+            return (area == a1 + a2 + a3);
+        }
+        public bool Similar(Triangle other)
+        {
+            return other.ABC == ABC && other.BAC == BAC && other.ACB == ACB;
+        }
+        public override string ToString()
+        {
+            return $"A: {A}, B: {B}, C: {C}";
+        }
+
+        public bool Equals(Triangle other)
+        {
+            return other.A == A && other.B == B && other.C == C && other.AB == AB && other.BC == BC && other.AC == AC;
+        }
+
+        public static bool operator ==(Triangle left, Triangle right)
+        {
+            return left.Equals(right);
+        }
+
+        public static bool operator !=(Triangle left, Triangle right)
+        {
+            return !(left == right);
+        }
+
+        public override int GetHashCode()
+        {
+            throw new NotImplementedException();
         }
     }
 }
