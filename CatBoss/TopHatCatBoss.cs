@@ -260,7 +260,19 @@ namespace TopHatCatBoss.CatBoss
             if (timer > 120)
             {
                 timer = 0;
-                AtkType = AttackType.Sword; //ModdingusUtils.RandomFromEnum<AttackType>();
+                switch (Main.rand.Next(0,3))
+                {
+                    case 0:
+                        AtkType = AttackType.Book;
+                        break;
+                    case 1:
+                        AtkType = AttackType.Gun;
+                        break;
+                    case 2:
+                        AtkType = AttackType.Sword;
+                        break;
+                }
+                //AtkType = AttackType.Sword; //ModdingusUtils.RandomFromEnum<AttackType>();
                 AIState = ActionState.Attack;
             }
         }
@@ -294,7 +306,7 @@ namespace TopHatCatBoss.CatBoss
                         break;
                     case AttackType.Gun:
                         //bullets and rockets
-                        Projectile.NewProjectile()
+                        //Projectile.NewProjectile()
                         break;
                     default:
                         if (timer == 1)
