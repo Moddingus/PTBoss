@@ -266,7 +266,7 @@ namespace TopHatCatBoss.CatBoss
                         AtkType = AttackType.Book;
                         break;
                     case 1:
-                        AtkType = AttackType.Gun;
+                        AtkType = AttackType.Staff;
                         break;
                     case 2:
                         AtkType = AttackType.Sword;
