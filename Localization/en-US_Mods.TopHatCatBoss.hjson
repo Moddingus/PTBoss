@@ -1,8 +1,10 @@
 NPCs.TopHatCatBoss.DisplayName: Top Hat Cat Boss
 
 Projectiles: {
-	gss.DisplayName: gss
-	BossLaser.DisplayName: Boss Laser
-	BossClone.DisplayName: Boss Clone
-	Bolt.DisplayName: Bolt
+	gss.DisplayName: God Slayer Sword
+	BossLaser.DisplayName: Cat Laser
+	BossClone.DisplayName: Top Hat Cat Boss
+	Bolt.DisplayName: Dark Bolt
+	Slash.DisplayName: Slash
+	DynamicRope.DisplayName: Dynamic Rope
 }

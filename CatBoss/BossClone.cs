@@ -26,8 +26,8 @@ namespace TopHatCatBoss.CatBoss
     /// ai[2] boss index
     /// ai[3] attack style
 	public class BossClone : ModProjectile
-	{
-        
+    {
+
         public override string Texture => "TopHatCatBoss/CatBoss/TopHatCatBoss";
 
         public override void SetStaticDefaults()
@@ -56,12 +56,14 @@ namespace TopHatCatBoss.CatBoss
         public Vector2 centerPoint;
         public Vector2 aDirection;
         public int entranceDelay;
+        private Vector2 off;
         public override void SendExtraAI(BinaryWriter writer)
         {
             writer.WriteVector2(aDirection);
             writer.Write(entranceDelay);
             writer.Write(attackStyle);
             writer.WriteVector2(centerPoint);
+            writer.WriteVector2(off);
         }
         public override void ReceiveExtraAI(BinaryReader reader)
         {
@@ -69,8 +71,30 @@ namespace TopHatCatBoss.CatBoss
             entranceDelay = reader.Read();
             attackStyle = reader.Read();
             centerPoint = reader.ReadVector2();
+            off = reader.ReadVector2();
         }
-        public override bool PreAI() => --entranceDelay <= 0;
+        public override void OnSpawn(IEntitySource source)
+        {
+            NPC owner = Main.npc[(int)Projectile.ai[2]];
+            Player target = Main.player[owner.target];
+            off = target.Center - Projectile.Center;
+        }
+        public override bool PreAI()
+        {
+            if (--entranceDelay <= 0)
+            {
+                return true;
+            }
+            else
+            {
+                NPC owner = Main.npc[(int)Projectile.ai[2]];
+                Player target = Main.player[owner.target];
+
+                Projectile.Center = target.Center + off;
+                centerPoint = target.Center;
+            }
+            return false;
+        }
 
         public override void AI()
         {
@@ -112,24 +136,7 @@ namespace TopHatCatBoss.CatBoss
                 case 1:
                     int i = 30;
 
-                    if (timer == 1)
-                    {
-                        Projectile.velocity = Projectile.DirectionTo(centerPoint) * 16;
-                    }
-                    if (timer == 10)
-                    {
-                        Projectile.velocity = Vector2.Zero;
-                        Projectile.velocity = -Vector2.UnitY * 2.5f;
-                        for (int ii = 0; ii < 4; ii++)
-                        {
-                            laserIndex[i] = Projectile.NewProjectile(Projectile.GetSource_FromAI(), Projectile.Center, aDirection.RotatedBy(MathHelper.PiOver4 * i), ModContent.ProjectileType<BossLaser>(), 100, 5, -1, 0, Projectile.whoAmI + Main.maxNPCs, 20);
-                        }
-                    }
-                    if (timer == 60)
-                    {
-                        Main.projectile[laserIndex[0]].Kill();
-                        Projectile.Kill();
-                    }
+
                     break;
                 case 3:
 
@@ -143,24 +150,26 @@ namespace TopHatCatBoss.CatBoss
                     {
                         Projectile.velocity *= 0.25f;
                     }
-                    if (timer == i2 + 4)
+                    if (timer == i2 + 10)
                     {
                         laserIndex[0] = Projectile.NewProjectile(Projectile.GetSource_FromAI(), Projectile.Center, Projectile.Center.DirectionTo(centerPoint), ModContent.ProjectileType<BossLaser>(), 100, 5, -1, 0, Projectile.whoAmI + Main.maxNPCs, 20);
+                        Main.projectile[laserIndex[0]].timeLeft = 80;
                     }
-                    if (timer == i2 + 30)
+                    if (timer == i2 + 90)
                     {
                         Main.projectile[laserIndex[0]].Kill();
                     }
-                    if (timer == i2 + 34)
+                    if (timer == i2 + 94)
                     {
                         Projectile.velocity = Projectile.Center.DirectionTo(centerPoint) * -15;
                     }
-                    if (timer == i2 + 80)
+                    if (timer == i2 + 140)
                     {
                         Projectile.Kill();
                     }
                     break;
             }
+            Projectile.spriteDirection = Projectile.Center.DirectionTo(centerPoint).X > 0 ? 1 : -1;
 
         }
         private void gunAttack()
@@ -181,11 +190,12 @@ namespace TopHatCatBoss.CatBoss
             Main.instance.LoadProjectile(Type);
             Texture2D t = TextureAssets.Projectile[Type].Value;
             Rectangle source = new Rectangle(0, 0, t.Width, (int)(36));
+            SpriteEffects spriteEffects = Projectile.direction == 1 ? SpriteEffects.None : SpriteEffects.FlipHorizontally;
             for (float i = 0; i < tl; i += (float)(tl / 3))
             {
                 float percent = i / tl;
                 Vector2 dpos = Projectile.oldPos[(int)i] - Main.screenPosition + t.center() * Projectile.scale - Vector2.UnitY * 12;
-                Main.spriteBatch.Draw(t, dpos, source, Color.Purple * (1 - percent) * Projectile.Opacity, Projectile.rotation, t.center(), Projectile.scale, SpriteEffects.None, 0);
+                Main.spriteBatch.Draw(t, dpos, source, Color.Purple * (1 - percent) * Projectile.Opacity, Projectile.rotation, t.center(), Projectile.scale, spriteEffects, 0);
             }
             return true;
         }

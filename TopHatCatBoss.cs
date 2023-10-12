@@ -12,14 +12,11 @@ namespace TopHatCatBoss
 	{
         public override void Load()
         {
-            if (Main.netMode != NetmodeID.Server)
+            if (!Main.dedServ)
             {
                 Ref<Effect> Shockwave = new Ref<Effect>(ModContent.Request<Effect>("TopHatCatBoss/CatBoss/Assets/Shockwave", AssetRequestMode.ImmediateLoad).Value);
                 
-
-
                 Filters.Scene["Shockwave"] = new Filter(new ScreenShaderData(Shockwave, "Shockwave"), EffectPriority.VeryHigh);
-                Filters.Scene["Shockwave"].Load();
             }
         }
     }

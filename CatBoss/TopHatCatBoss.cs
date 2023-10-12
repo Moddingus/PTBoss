@@ -64,17 +64,14 @@ namespace TopHatCatBoss.CatBoss
         private ref float timer => ref NPC.ai[0];
 
         private float ShaderTimer = 0;
-        private Vector2 anchor;
 
         public override void SendExtraAI(BinaryWriter writer)
         {
             writer.Write(ShaderTimer);
-            writer.WriteVector2(anchor);
         }
         public override void ReceiveExtraAI(BinaryReader reader)
         {
             ShaderTimer = reader.Read();
-            anchor = reader.ReadVector2();
         }
         public override void SetStaticDefaults()
         {
@@ -82,7 +79,7 @@ namespace TopHatCatBoss.CatBoss
             Main.npcFrameCount[Type] = 26;
 
             NPCID.Sets.TrailCacheLength[NPC.type] = 10;
-            NPCID.Sets.TrailingMode[NPC.type] = 0;
+            NPCID.Sets.TrailingMode[NPC.type] = 3;
 
             NPCID.Sets.MPAllowedEnemies[Type] = true;
 
@@ -90,7 +87,7 @@ namespace TopHatCatBoss.CatBoss
 
             NPCID.Sets.NPCBestiaryDrawModifiers drawModifiers = new NPCID.Sets.NPCBestiaryDrawModifiers()
             {
-                CustomTexturePath = "ExampleMod/Assets/Textures/Bestiary/MinionBoss_Preview",
+                CustomTexturePath = "TopHatCatBoss/CatBoss/TopHatCatBoss",
                 PortraitScale = 0.6f, // Portrait refers to the full picture when clicking on the icon in the bestiary
                 PortraitPositionYOverride = 0f,
             };
@@ -98,6 +95,7 @@ namespace TopHatCatBoss.CatBoss
 
             NPCID.Sets.ImmuneToRegularBuffs[Type] = true;
         }
+        private int[] laserIndex = new int[4];
         public override void BossLoot(ref string name, ref int potionType)
         {
             name = "Top Hat Cat";
@@ -148,7 +146,6 @@ namespace TopHatCatBoss.CatBoss
         }
         public override void OnSpawn(IEntitySource source)
         {
-            anchor = NPC.Center;
             AIState = ActionState.Spawn;
             if (NPC.target < 0 || NPC.target == 255 || Main.player[NPC.target].dead || !Main.player[NPC.target].active)
             {
@@ -226,7 +223,6 @@ namespace TopHatCatBoss.CatBoss
         }
         public void Spawn()
         {
-
             if (timer < 120)
             {
                 NPC.dontTakeDamage = true;
@@ -246,10 +242,11 @@ namespace TopHatCatBoss.CatBoss
         }
         public void ChooseAttack()
         {
+            Player target = Main.player[NPC.target];
             if (timer <= 1)
             {
-                Vector2 pos = new Rectangle((int)(anchor.X - 500), (int)(anchor.Y), 1000, -550).random();
-                NPC.velocity = NPC.DirectionTo(pos) * 9;
+                Vector2 pos = target.Center + ModdingusUtils.randomVector();
+                NPC.velocity = NPC.DirectionTo(pos) * (9 + (target.Distance(NPC.Center)/80));
             }
             if (timer == Main.rand.Next(30, 90))
             {
@@ -263,7 +260,7 @@ namespace TopHatCatBoss.CatBoss
             if (timer > 120)
             {
                 timer = 0;
-                AtkType = AttackType.Book; //ModdingusUtils.RandomFromEnum<AttackType>();
+                AtkType = AttackType.Sword; //ModdingusUtils.RandomFromEnum<AttackType>();
                 AIState = ActionState.Attack;
             }
         }
@@ -276,7 +273,7 @@ namespace TopHatCatBoss.CatBoss
                 switch (AtkType)
                 {
                     case AttackType.Sword:
-                        if (timer % 60 == 0)
+                        if (timer % 60 == 0 && timer < 220)
                         {
                             for (int i = 0; i < 12; i++)
                             {
@@ -286,23 +283,23 @@ namespace TopHatCatBoss.CatBoss
                         }
                         if (timer == 220)
                         {
+                            Projectile.NewProjectile(NPC.GetSource_FromAI(), NPC.Center, -Vector2.UnitY, ModContent.ProjectileType<Slash>(), 220, 15, -1, NPC.whoAmI);
+                            
+                        }
+                        if (timer == 380)
+                        {
                             timer = 0;
                             AIState = ActionState.Choose;
                         }
                         break;
                     case AttackType.Gun:
-                        if (timer == 1) {
-                            
-                        }
-                        if (timer < 130)
-                        {
-                            Vector2 direction = Vector2.One.RotatedBy(Main.rand.NextFloat(0, MathHelper.TwoPi));
-                        }
+                        //bullets and rockets
+                        Projectile.NewProjectile()
                         break;
                     default:
                         if (timer == 1)
                         {
-                            Vector2 nextPos = ModdingusUtils.randomCorner() * 400;
+                            Vector2 nextPos = ModdingusUtils.randomCorner() * 550;
                             for (int i = 0; i < 3; i++)
                             {
                                 Vector2 clonePos(int i)
@@ -328,19 +325,65 @@ namespace TopHatCatBoss.CatBoss
                         if (timer == 9)
                         {
                             int a = Projectile.NewProjectile(NPC.GetSource_FromAI(), NPC.Center, NPC.velocity, ModContent.ProjectileType<BossLaser>(), 100, 5, -1, 0, NPC.whoAmI, 20);
-                            Main.projectile[a].timeLeft = 26;
+                            Main.projectile[a].timeLeft = 80;
                         }
-                        if (timer == 35)
+                        if (timer == 89)
                         {
                             NPC.Center = (target.Center + Vector2.UnitX * 300 * ModdingusUtils.PoN1() - Vector2.UnitY * 50);
                         }
-                        if (timer == 80)
+                        if (timer == 133)
                         {
                             NPC.velocity = Vector2.Zero;
-                            var c = createClone(NPC.Center, 1, NPC.Center + Vector2.UnitY * 50);
-                            c.aDirection = Vector2.UnitX * NPC.getDirection();
                         }
-                        if (timer == 360)
+                        if (timer == 134)
+                        {
+                            NPC.velocity = Vector2.Zero;
+                            NPC.velocity = -Vector2.UnitY * 2.5f;
+                            var off = Main.rand.NextFloat(0, MathHelper.TwoPi);
+                            for (int a = 0; a < 4; a++)
+                            {
+                                laserIndex[a] = Projectile.NewProjectile(NPC.GetSource_FromAI(), NPC.Center, Vector2.One.RotatedBy(off + MathHelper.PiOver2 * a), ModContent.ProjectileType<BossLaser>(), 100, 5, -1, 0, NPC.whoAmI, 20);
+                            }
+                        }
+                        if (timer > 134 && timer < 270)
+                        {
+                            foreach (int c in laserIndex)
+                                Main.projectile[c].velocity = Main.projectile[c].velocity.RotatedBy(0.01f);
+                        }
+                        if (timer == 270)
+                        {
+                            foreach (int c in laserIndex)
+                                Main.projectile[c].Kill();
+                        }
+                        if (timer == 80 + 230)
+                        {
+                            Vector2 nextPos = ModdingusUtils.randomSide() * 550 * 1.41421356f; //sqrt 2
+
+
+                            for (int i = 0; i < 3; i++)
+                            {
+                                var a = createClone(target.Center + nextPos.RotatedBy(MathHelper.PiOver2 * (i + 1)), 3, target.Center);
+                                a.entranceDelay = (i + 1) * 25;
+                            }
+
+                            Vector2 pos = NPC.Center + Vector2.UnitX * 20 * NPC.direction;
+                            NPC.Center = target.Center + nextPos;
+                            NPC.velocity = NPC.DirectionTo(target.Center) * 5;
+                        }
+                        if (timer > 315 && timer < 320)
+                        {
+                            NPC.velocity *= 0.25f;
+                        }
+                        if (timer == 319)
+                        {
+                            int a = Projectile.NewProjectile(NPC.GetSource_FromAI(), NPC.Center, NPC.velocity, ModContent.ProjectileType<BossLaser>(), 100, 5, -1, 0, NPC.whoAmI, 20);
+                            Main.projectile[a].timeLeft = 80;
+                        }
+                        if (timer == 399)
+                        {
+                            NPC.Center = (target.Center + Vector2.UnitX * 300 * ModdingusUtils.PoN1() - Vector2.UnitY * 50);
+                        }
+                        if (timer == 400)
                         {
                             timer = 0;
                             AIState = ActionState.Choose;
@@ -363,18 +406,19 @@ namespace TopHatCatBoss.CatBoss
         public override bool PreDraw(SpriteBatch spriteBatch, Vector2 screenPos, Color drawColor)
         {
             float tl = (float)NPC.oldPos.Length;
+            float scale = NPC.scale;
             Main.instance.LoadNPC(Type);
             Texture2D t = TextureAssets.Npc[Type].Value;
             Rectangle source = new Rectangle(0, NPC.frame.Y, t.Width, NPC.frame.Height);
             for (float i = 0; i < tl; i += (float)(tl / 3))
             {
                 float percent = i / tl;
-                Vector2 dpos = NPC.oldPos[(int)i] - screenPos + new Vector2(t.Width / 2, NPC.height);
-                //spriteBatch.Draw(t, dpos, source, Color.Purple * (1 - percent), NPC.rotation, NPC.origin(), NPC.scale, SpriteEffects.None, 0);
+                Vector2 dpos = NPC.oldPos[(int)i] - screenPos + new Vector2(t.Width * scale / 4, NPC.height * scale / 2);
+                spriteBatch.Draw(t, dpos, source, Color.Purple * (1 - percent), NPC.rotation, NPC.origin(), scale, NPC.direction == 1 ? SpriteEffects.FlipHorizontally : SpriteEffects.None, 0);
             }
             switch (AIState) //shit code
             {
-                case ActionState.Choose:
+                /*case ActionState.Choose:
                     float opacity(int i)
                     {
                         return 1;
@@ -432,7 +476,7 @@ namespace TopHatCatBoss.CatBoss
                         Vector2 pos = NPC.Center - screenPos + new Vector2(-85, -50) + Vector2.UnitX * (5 - 1) * 50 + offset(5);
                         spriteBatch.Draw(texture, pos, texture.source(), Color.White * opacity(5), rotation(5), texture.center(), scale(5), SpriteEffects.None, 0);
                     }
-                    break;
+                    break;*/
                 case ActionState.Death:
                     Main.spriteBatch.End();
                     Main.spriteBatch.Begin(SpriteSortMode.Immediate, BlendState.AlphaBlend, SamplerState.LinearClamp, DepthStencilState.Default, RasterizerState.CullNone, null, Main.GameViewMatrix.ZoomMatrix);
@@ -477,7 +521,7 @@ namespace TopHatCatBoss.CatBoss
     {
         public static Vector2 randomVector()
         {
-            return new Vector2(Main.rand.NextFloat(), Main.rand.NextFloat());
+            return Vector2.UnitX.RotatedBy(Main.rand.NextFloat(0, MathHelper.TwoPi));
         }
         /// <summary>
         /// returns the center of the current frame as coords on the texture
@@ -508,6 +552,16 @@ namespace TopHatCatBoss.CatBoss
         public static Vector2 randomCorner()
         {
             return new Vector2(PoN1(), PoN1());
+        }
+        public static Vector2 randomSide()
+        {
+            if (Main.rand.NextBool())
+            {
+                return new Vector2(PoN1(), 0);
+            } else
+            {
+                return new Vector2(0, PoN1());
+            }
         }
         public static int PoN1()
         {
