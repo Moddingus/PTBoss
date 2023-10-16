@@ -52,7 +52,7 @@ namespace TopHatCatBoss.CatBoss
         public override void OnSpawn(IEntitySource source)
         {
             spawnPos = Projectile.Center;
-            ModContent.GetInstance<MCameraModifiers>().Shake(Projectile.Center, 5f, .5f);
+            ModContent.GetInstance<MCameraModifiers>().Shake(Projectile.Center, 5f, 30);
         }
         public override void SendExtraAI(BinaryWriter writer)
         {

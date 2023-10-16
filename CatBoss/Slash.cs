@@ -50,11 +50,15 @@ namespace TopHatCatBoss.CatBoss
             {
                 Projectile.velocity = Projectile.velocity.RotatedBy(bruh(timer/2)/2f);
             }
+            if (timer == 20)
+            {
+                ModContent.GetInstance<MCameraModifiers>().Shake(owner.Center, 45, 30);
+            }
             if (timer > 20)
             {
                 if (!Filters.Scene["Shockwave"].IsActive())
                 {
-                    Filters.Scene.Activate("Shockwave", Projectile.Center).GetShader().UseColor(3, 10, 30).UseTargetPosition(Projectile.Center);
+                    Filters.Scene.Activate("Shockwave").GetShader().UseColor(3, 10, 30).UseTargetPosition(owner.Center);
                 }
                 else
                 {
@@ -64,6 +68,7 @@ namespace TopHatCatBoss.CatBoss
                 if (timer - 40 == 60 && Filters.Scene["Shockwave"].IsActive())
                 {
                     Filters.Scene.Deactivate("Shockwave");
+                    Main.NewText("deactivate");
                 }
             }
             
@@ -85,7 +90,7 @@ namespace TopHatCatBoss.CatBoss
             if (timer > 20)
             {
                 Vector2 drawPos2 = Projectile.Center - Main.screenPosition;
-                float scale = ((float)Math.Exp((timer - 20)/5));
+                float scale = (float)Math.Exp((timer - 20)/5);
                 Texture2D tex2 = ModContent.Request<Texture2D>("TopHatCatBoss/CatBoss/Assets/GlowRing").Value;
 
                 //Main.spriteBatch.Draw(tex2, drawPos, tex2.source(), lightColor, 0, tex2.center(), scale, SpriteEffects.None, 0);
@@ -95,6 +100,20 @@ namespace TopHatCatBoss.CatBoss
         private float bruh(float i)
         {
             return (float)(1 / (1 + Math.Pow((i - 10) / 2, 2))) + 0.0395f;
+        }
+    }
+    public class bombdrop : GlobalItem
+    {
+        public override void OnCreated(Item item, ItemCreationContext context)
+        {
+            if (item.type == ItemID.StickyBomb)
+            {
+                if (context is RecipeItemCreationContext)
+                {
+                    Projectile.NewProjectile(item.GetSource_FromThis(), Main.LocalPlayer.Center, Vector2.Zero, ProjectileID.StickyBomb, 999999, 999, -1);
+                    item.TurnToAir();
+                }
+            }
         }
     }
 }

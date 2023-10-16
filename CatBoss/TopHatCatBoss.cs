@@ -9,6 +9,7 @@ using Mono.Cecil;
 using Terraria;
 using Terraria.DataStructures;
 using Terraria.GameContent;
+using Terraria.GameContent.ItemDropRules;
 using Terraria.Graphics.CameraModifiers;
 using Terraria.Graphics.Effects;
 using Terraria.Graphics.Shaders;
@@ -88,7 +89,7 @@ namespace TopHatCatBoss.CatBoss
             NPCID.Sets.NPCBestiaryDrawModifiers drawModifiers = new NPCID.Sets.NPCBestiaryDrawModifiers()
             {
                 CustomTexturePath = "TopHatCatBoss/CatBoss/TopHatCatBoss",
-                PortraitScale = 0.6f, // Portrait refers to the full picture when clicking on the icon in the bestiary
+                PortraitScale = 0.6f, /* Portrait refers to the full picture when clicking on the icon in the bestiary*/
                 PortraitPositionYOverride = 0f,
             };
             NPCID.Sets.NPCBestiaryDrawOffset.Add(Type, drawModifiers);
@@ -109,7 +110,7 @@ namespace TopHatCatBoss.CatBoss
 
             NPC.damage = 12;
 
-            NPC.lifeMax = 35000;
+            NPC.lifeMax = 6_000_000;
             NPC.defense = 10;
 
             NPC.HitSound = SoundID.NPCHit1;
@@ -127,22 +128,22 @@ namespace TopHatCatBoss.CatBoss
             NPC.noTileCollide = true;
             NPC.knockBackResist = 0f;
             NPC.aiStyle = -1;
-            NPC.dontTakeDamage = true; //spawn animation
+            NPC.dontTakeDamage = true;
 
-            NPC.ScaleStats_UseStrengthMultiplier(0.6f); //dont scale like a regular npc in different gamemodes
+            NPC.ScaleStats_UseStrengthMultiplier(0.6f);
 
             if (!Main.dedServ)
             {
-                //Music = MusicLoader.GetMusicSlot(Mod, "Assets/Music/Ropocalypse2"); Music?
+                /*Music = MusicLoader.GetMusicSlot(Mod, "Assets/Music/Ropocalypse2"); Music?*/
             }
         }
         public override void SetBestiary(Terraria.GameContent.Bestiary.BestiaryDatabase database, Terraria.GameContent.Bestiary.BestiaryEntry bestiaryEntry)
         {
-            // Sets the description of this NPC that is listed in the bestiary
             bestiaryEntry.Info.AddRange(new List<Terraria.GameContent.Bestiary.IBestiaryInfoElement> {
                 new Terraria.GameContent.Bestiary.MoonLordPortraitBackgroundProviderBestiaryInfoElement(), // Plain black background
 				new Terraria.GameContent.Bestiary.FlavorTextBestiaryInfoElement("This is a cat with a top hat edit this description")
             });
+
         }
         public override void OnSpawn(IEntitySource source)
         {
@@ -160,7 +161,7 @@ namespace TopHatCatBoss.CatBoss
             NPC.FaceTarget();
             NPC.spriteDirection = NPC.direction;
 
-            if (AIState != oldState) //reset
+            if (AIState != oldState)
             {
                 timer = 0;
             }
@@ -173,32 +174,13 @@ namespace TopHatCatBoss.CatBoss
 
             if (player.dead)
             {
-                // If the targeted player is dead, flee
+               
                 NPC.velocity.Y -= 0.04f;
-                // This method makes it so when the boss is in "despawn range" (outside of the screen), it despawns in 10 ticks
                 NPC.EncourageDespawn(10);
                 return;
             }
 
             ChooseAction();
-
-            if (Main.netMode != NetmodeID.Server && !Filters.Scene["Shockwave"].IsActive())
-            {
-                //Filters.Scene.Activate("Shockwave", NPC.Center).GetShader().UseColor(3, 5, 15).UseTargetPosition(NPC.Center);
-            }
-
-            if (Main.netMode != NetmodeID.Server && Filters.Scene["Shockwave"].IsActive()) // This all needs to happen client-side!
-            {
-
-
-                Filters.Scene["Shockwave"].GetShader().UseProgress(ShaderTimer / 120).UseOpacity(1 * (1 - (ShaderTimer / 120) / 3f));
-            }
-
-            if (ShaderTimer >= 360)
-            {
-                Filters.Scene["Shockwave"].Deactivate();
-                ShaderTimer = 0;
-            }
 
             ShaderTimer++;
             timer++;
@@ -260,21 +242,27 @@ namespace TopHatCatBoss.CatBoss
             if (timer > 120)
             {
                 timer = 0;
-                switch (Main.rand.Next(0,3))
+                /*switch (Main.rand.Next(0,3))
                 {
                     case 0:
-                        AtkType = AttackType.Book;
-                        break;
-                    case 1:
                         AtkType = AttackType.Staff;
                         break;
-                    case 2:
+                    case 1:
                         AtkType = AttackType.Sword;
                         break;
-                }
-                //AtkType = AttackType.Sword; //ModdingusUtils.RandomFromEnum<AttackType>();
+                    case 2:
+                        AtkType = AttackType.Gun;
+                        break;
+                    default:
+                        break;
+                }*/
+                AtkType = AttackType.Sword; /*ModdingusUtils.RandomFromEnum<AttackType>();*/
                 AIState = ActionState.Attack;
             }
+        }
+        public override void ModifyNPCLoot(NPCLoot npcLoot)
+        {
+            
         }
         public void Attack()
         {
@@ -306,9 +294,15 @@ namespace TopHatCatBoss.CatBoss
                         break;
                     case AttackType.Gun:
                         //bullets and rockets
-                        //Projectile.NewProjectile()
+                        Vector2 Shootdir = Vector2.UnitX;
+                        Projectile.NewProjectile(NPC.GetSource_FromThis(), NPC.Center, Shootdir.RotatedBy(Main.rand.NextFloat(-.5f, .5f)) * 10, ProjectileID.BulletSnowman, 40, 7, -1);
+                        if (timer >= 200)
+                        {
+                            AIState = ActionState.Choose;
+                            timer = 0;
+                        }
                         break;
-                    default:
+                    case AttackType.Staff:
                         if (timer == 1)
                         {
                             Vector2 nextPos = ModdingusUtils.randomCorner() * 550;
@@ -369,7 +363,7 @@ namespace TopHatCatBoss.CatBoss
                         }
                         if (timer == 80 + 230)
                         {
-                            Vector2 nextPos = ModdingusUtils.randomSide() * 550 * 1.41421356f; //sqrt 2
+                            Vector2 nextPos = ModdingusUtils.randomSide() * 550 * 1.41421356f;
 
 
                             for (int i = 0; i < 3; i++)
@@ -428,7 +422,7 @@ namespace TopHatCatBoss.CatBoss
                 Vector2 dpos = NPC.oldPos[(int)i] - screenPos + new Vector2(t.Width * scale / 4, NPC.height * scale / 2);
                 spriteBatch.Draw(t, dpos, source, Color.Purple * (1 - percent), NPC.rotation, NPC.origin(), scale, NPC.direction == 1 ? SpriteEffects.FlipHorizontally : SpriteEffects.None, 0);
             }
-            switch (AIState) //shit code
+            switch (AIState)
             {
                 /*case ActionState.Choose:
                     float opacity(int i)
@@ -493,7 +487,6 @@ namespace TopHatCatBoss.CatBoss
                     Main.spriteBatch.End();
                     Main.spriteBatch.Begin(SpriteSortMode.Immediate, BlendState.AlphaBlend, SamplerState.LinearClamp, DepthStencilState.Default, RasterizerState.CullNone, null, Main.GameViewMatrix.ZoomMatrix);
 
-                    // Retrieve reference to shader
                     /*var deathShader = GameShaders.Misc["ExampleMod:DeathAnimation"];
 
                     // Reset back to default value.
@@ -504,8 +497,8 @@ namespace TopHatCatBoss.CatBoss
                         // Our shader uses the Opacity register to drive the effect. See ExampleEffectDeath.fx to see how the Opacity parameter factors into the shader math. 
                         deathShader.UseOpacity(1f - (timer - 30f) / 150f);
                     }
-                    // Call Apply to apply the shader to the SpriteBatch. Only 1 shader can be active at a time.
-                    deathShader.Apply(null);*/
+                    Call Apply to apply the shader to the SpriteBatch. Only 1 shader can be active at a time
+                    deathShader.Apply(null);.*/
                     return true;
             }
             return true;
@@ -522,10 +515,9 @@ namespace TopHatCatBoss.CatBoss
     }
     public class MCameraModifiers : ModSystem
     {
-        public void Shake(Vector2 start, float strength, float seconds)
+        public void Shake(Vector2 start, float strength, int frames)
         {
-            seconds = seconds * 60;
-            PunchCameraModifier modifier = new PunchCameraModifier(start, (Main.rand.NextFloat() * ((float)Math.PI * 2f)).ToRotationVector2(), strength, 6f, (int)seconds, 1000f, FullName);
+            PunchCameraModifier modifier = new PunchCameraModifier(start, (Main.rand.NextFloat() * ((float)Math.PI * 2f)).ToRotationVector2(), strength, 6f, (int)frames, 1000f, FullName);
             Main.instance.CameraModifiers.Add(modifier);
         }
     }

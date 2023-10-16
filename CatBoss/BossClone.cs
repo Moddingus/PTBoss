@@ -163,6 +163,10 @@ namespace TopHatCatBoss.CatBoss
                     {
                         Projectile.velocity = Projectile.Center.DirectionTo(centerPoint) * -15;
                     }
+                    if (timer > i2+94)
+                    {
+                        Projectile.velocity *= 1.01f;
+                    }
                     if (timer == i2 + 140)
                     {
                         Projectile.Kill();
