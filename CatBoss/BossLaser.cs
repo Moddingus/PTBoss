@@ -32,7 +32,6 @@ namespace TopHatCatBoss.CatBoss
 
         public override void SetDefaults()
         {
-            
             Projectile.penetrate = -1;
             Projectile.width = 10;
             Projectile.height = 10;

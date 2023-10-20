@@ -17,6 +17,7 @@ using Terraria.Audio;
 using Terraria.GameContent.ItemDropRules;
 using Terraria.Graphics.CameraModifiers;
 using Terraria.Graphics.Effects;
+using Microsoft.CodeAnalysis;
 
 namespace TopHatCatBoss.CatBoss
 {
@@ -50,28 +51,31 @@ namespace TopHatCatBoss.CatBoss
             {
                 Projectile.velocity = Projectile.velocity.RotatedBy(bruh(timer/2)/2f);
             }
-            if (timer == 20)
+            if (Main.netMode != NetmodeID.Server)
             {
-                ModContent.GetInstance<MCameraModifiers>().Shake(owner.Center, 45, 30);
+                if (timer == 20)
+                {
+                    ModContent.GetInstance<MCameraModifiers>().Shake(owner.Center, 45, 30);
+                }
+                if (timer > 20)
+                {
+                    if (!Filters.Scene["Shockwave"].IsActive())
+                    {
+                        Filters.Scene["Shockwave"].GetShader().UseColor(3, 10, 30).UseTargetPosition(owner.Center);
+                        Filters.Scene.Activate("Shockwave", Projectile.Center).GetShader().UseColor(3, 10, 30).UseTargetPosition(Projectile.Center);
+                    }
+                    else
+                    {
+                        float progress = (timer - 20) / 20f;
+                        Filters.Scene["Shockwave"].GetShader().UseProgress(progress).UseOpacity(100 * (1 - progress / 3f)).UseTargetPosition(Projectile.Center);
+                    }
+                    if (timer - 40 == 60 && Filters.Scene["Shockwave"].IsActive())
+                    {
+                        Filters.Scene.Deactivate("Shockwave");
+                        Main.NewText("deactivate");
+                    }
+                }
             }
-            if (timer > 20)
-            {
-                if (!Filters.Scene["Shockwave"].IsActive())
-                {
-                    Filters.Scene.Activate("Shockwave").GetShader().UseColor(3, 10, 30).UseTargetPosition(owner.Center);
-                }
-                else
-                {
-                    float progress = (timer - 20) / 20f;
-                    Filters.Scene["Shockwave"].GetShader().UseProgress(progress).UseOpacity(100 * (1 - progress / 3f));
-                }
-                if (timer - 40 == 60 && Filters.Scene["Shockwave"].IsActive())
-                {
-                    Filters.Scene.Deactivate("Shockwave");
-                    Main.NewText("deactivate");
-                }
-            }
-            
 
             timer++;
         }

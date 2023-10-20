@@ -9,6 +9,7 @@ using Mono.Cecil;
 using Terraria;
 using Terraria.DataStructures;
 using Terraria.GameContent;
+using Terraria.GameContent.Events;
 using Terraria.GameContent.ItemDropRules;
 using Terraria.Graphics.CameraModifiers;
 using Terraria.Graphics.Effects;
@@ -81,7 +82,6 @@ namespace TopHatCatBoss.CatBoss
 
             NPCID.Sets.TrailCacheLength[NPC.type] = 10;
             NPCID.Sets.TrailingMode[NPC.type] = 3;
-
             NPCID.Sets.MPAllowedEnemies[Type] = true;
 
             NPCID.Sets.BossBestiaryPriority.Add(Type);
@@ -93,7 +93,6 @@ namespace TopHatCatBoss.CatBoss
                 PortraitPositionYOverride = 0f,
             };
             NPCID.Sets.NPCBestiaryDrawOffset.Add(Type, drawModifiers);
-
             NPCID.Sets.ImmuneToRegularBuffs[Type] = true;
         }
         private int[] laserIndex = new int[4];
@@ -256,7 +255,7 @@ namespace TopHatCatBoss.CatBoss
                     default:
                         break;
                 }*/
-                AtkType = AttackType.Sword; /*ModdingusUtils.RandomFromEnum<AttackType>();*/
+                AtkType = AttackType.Gun; /*ModdingusUtils.RandomFromEnum<AttackType>();*/
                 AIState = ActionState.Attack;
             }
         }
@@ -284,7 +283,7 @@ namespace TopHatCatBoss.CatBoss
                         if (timer == 220)
                         {
                             Projectile.NewProjectile(NPC.GetSource_FromAI(), NPC.Center, -Vector2.UnitY, ModContent.ProjectileType<Slash>(), 220, 15, -1, NPC.whoAmI);
-                            
+
                         }
                         if (timer == 380)
                         {
@@ -293,9 +292,19 @@ namespace TopHatCatBoss.CatBoss
                         }
                         break;
                     case AttackType.Gun:
-                        //bullets and rockets
-                        Vector2 Shootdir = Vector2.UnitX;
-                        Projectile.NewProjectile(NPC.GetSource_FromThis(), NPC.Center, Shootdir.RotatedBy(Main.rand.NextFloat(-.5f, .5f)) * 10, ProjectileID.BulletSnowman, 40, 7, -1);
+                        //chase player and shoot them
+                        if (timer == 45)
+                        {
+                            NPC.velocity = NPC.DirectionTo(target.Center) * NPC.Distance(target.Center)/30f;
+                        }
+                        if (timer % 60 == 0)
+                        {
+                            for (int i = 0; i < 6; i++) {
+                                var velocity = NPC.DirectionTo(target.Center).RotatedBy(MathHelper.Lerp(-0.3490658504f, 0.3490658504f, i / 5f)) * 15;
+                                Projectile.NewProjectile(NPC.GetSource_FromAI(), NPC.Center, velocity, ModContent.ProjectileType<Bolt>(), NPC.damage, 4f);
+                            }
+                            timer = 0;
+                        }
                         if (timer >= 200)
                         {
                             AIState = ActionState.Choose;
@@ -365,7 +374,6 @@ namespace TopHatCatBoss.CatBoss
                         {
                             Vector2 nextPos = ModdingusUtils.randomSide() * 550 * 1.41421356f;
 
-
                             for (int i = 0; i < 3; i++)
                             {
                                 var a = createClone(target.Center + nextPos.RotatedBy(MathHelper.PiOver2 * (i + 1)), 3, target.Center);
@@ -422,6 +430,12 @@ namespace TopHatCatBoss.CatBoss
                 Vector2 dpos = NPC.oldPos[(int)i] - screenPos + new Vector2(t.Width * scale / 4, NPC.height * scale / 2);
                 spriteBatch.Draw(t, dpos, source, Color.Purple * (1 - percent), NPC.rotation, NPC.origin(), scale, NPC.direction == 1 ? SpriteEffects.FlipHorizontally : SpriteEffects.None, 0);
             }
+            /*if (NPC.target >= 0)
+            {
+                Texture2D texture = ModContent.Request<Texture2D>("TopHatCatBoss/CatBoss/Assets/Blindness").Value;
+                Vector2 pos = Main.player[NPC.target].Center - Main.screenPosition - texture.Size()/2;
+                spriteBatch.Draw(texture, pos, Color.Black * 0.4f);
+            }*/
             switch (AIState)
             {
                 /*case ActionState.Choose:
@@ -523,6 +537,58 @@ namespace TopHatCatBoss.CatBoss
     }
     public static class ModdingusUtils
     {
+        public static void TrackClosestPlayer(this NPC npc, float speed, float inertia, float range)
+        {
+            Player target = FindClosestPlayer(npc, range);
+
+            if (target != null)
+            {
+                Vector2 direction = npc.DirectionTo(target.Center) * speed;
+
+                npc.velocity.X = (npc.velocity.X * (inertia - 1) + direction.X) / inertia;
+                npc.velocity.Y = (npc.velocity.Y * (inertia - 1) + direction.Y) / inertia;
+            }
+        }
+        public static void TrackClosestPlayer(this Projectile Projectile, float speed, float inertia, float range)
+        {
+            Player target = FindClosestPlayer(Projectile, range);
+
+            if (target != null)
+            {
+                Vector2 direction = Projectile.DirectionTo(target.Center) * speed;
+
+                Projectile.velocity.X = (Projectile.velocity.X * (inertia - 1) + direction.X) / inertia;
+                Projectile.velocity.Y = (Projectile.velocity.Y * (inertia - 1) + direction.Y) / inertia;
+            }
+        }
+        public static Player FindClosestPlayer(this Entity entity, float maxDetectDistance)
+        {
+            Player closestNPC = null;
+
+
+            float sqrMaxDetectDistance = maxDetectDistance * maxDetectDistance;
+
+
+            for (int k = 0; k < Main.maxPlayers; k++)
+            {
+                Player target = Main.player[k];
+                float sqrDistanceToTarget = Vector2.DistanceSquared(target.Center, entity.Center);
+                if (sqrDistanceToTarget < sqrMaxDetectDistance)
+                {
+                    sqrMaxDetectDistance = sqrDistanceToTarget;
+                    closestNPC = target;
+
+                }
+            }
+            return closestNPC;
+        }
+        public static Vector2 Normalized(this Vector2 vector)
+        {
+            if (vector.Length() > 0)
+                return vector / vector.Length();
+            else
+                return vector;
+        }
         public static Vector2 randomVector()
         {
             return Vector2.UnitX.RotatedBy(Main.rand.NextFloat(0, MathHelper.TwoPi));

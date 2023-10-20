@@ -1,4 +1,7 @@
-NPCs.TopHatCatBoss.DisplayName: Top Hat Cat Boss
+NPCs: {
+	TopHatCatBoss.DisplayName: Top Hat Cat Boss
+	BossRocket.DisplayName: Boss Rocket
+}
 
 Projectiles: {
 	gss.DisplayName: God Slayer Sword
@@ -7,4 +10,19 @@ Projectiles: {
 	Bolt.DisplayName: Dark Bolt
 	Slash.DisplayName: Slash
 	DynamicRope.DisplayName: Dynamic Rope
+	BossRocket.DisplayName: Boss Rocket
+}
+
+Buffs: {
+	Consumed: {
+		DisplayName: Consumed
+		Description: Mods.TopHatCatBoss.Buffs.Consumed.Description
+	}
+}
+
+Items: {
+	Debugger: {
+		Tooltip: ""
+		DisplayName: Debugger
+	}
 }
