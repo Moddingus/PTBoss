@@ -295,17 +295,30 @@ namespace TopHatCatBoss.CatBoss
                         //chase player and shoot them
                         if (timer == 45)
                         {
-                            NPC.velocity = NPC.DirectionTo(target.Center) * NPC.Distance(target.Center)/30f;
+                            //NPC.velocity = NPC.DirectionTo(target.Center) * NPC.Distance(target.Center) / 30f;
                         }
-                        if (timer % 60 == 0)
+                        if (timer % 60 == 0 && timer <= 240)
                         {
                             for (int i = 0; i < 6; i++) {
                                 var velocity = NPC.DirectionTo(target.Center).RotatedBy(MathHelper.Lerp(-0.3490658504f, 0.3490658504f, i / 5f)) * 15;
                                 Projectile.NewProjectile(NPC.GetSource_FromAI(), NPC.Center, velocity, ModContent.ProjectileType<Bolt>(), NPC.damage, 4f);
                             }
-                            timer = 0;
+                            for (int i = 0; i < 10; ++i)
+                            {
+                                var position = new Vector2(NPC.Center.X - 500 + i * 100, NPC.Center.Y - 400);
+                                var velocity = NPC.DirectionTo(target.Center).RotatedBy(MathHelper.Lerp(-0.3490658504f, 0.3490658504f, i / 5f)) * 15;
+                                Projectile.NewProjectile(NPC.GetSource_FromAI(), position, Vector2.UnitY.RotatedBy(Main.rand.NextFloat(-0.1745329252f, 0.1745329252f)) * 15, ModContent.ProjectileType<BossBullet>(), NPC.damage, 4f);
+                            }
                         }
-                        if (timer >= 200)
+                        if (timer == 300)
+                        {
+                            for (int i = 0; i < 6; i++)
+                            {
+                                Vector2 pos = NPC.Center + Vector2.One.RotatedBy(MathHelper.TwoPi/6 * i);
+                                Projectile.NewProjectile(NPC.GetSource_FromAI(), NPC.Center, NPC.Center.DirectionTo(pos) * 10, ModContent.ProjectileType<BossRocket>(), NPC.damage, 4f);
+                            }
+                        }
+                        if (timer >= 370)
                         {
                             AIState = ActionState.Choose;
                             timer = 0;

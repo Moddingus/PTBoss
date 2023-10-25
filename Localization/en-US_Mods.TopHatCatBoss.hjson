@@ -11,6 +11,7 @@ Projectiles: {
 	Slash.DisplayName: Slash
 	DynamicRope.DisplayName: Dynamic Rope
 	BossRocket.DisplayName: Boss Rocket
+	BossBullet.DisplayName: Boss Bullet
 }
 
 Buffs: {

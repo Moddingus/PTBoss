@@ -65,7 +65,10 @@ namespace TopHatCatBoss.CatBoss
         }
         public override void OnHitPlayer(Player target, Player.HurtInfo info)
         {
-            target.AddBuff(ModContent.BuffType<Consumed>(), 300);
+            if (!target.HasBuff(ModContent.BuffType<Consumed>()))
+                target.AddBuff(ModContent.BuffType<Consumed>(), 300);
+            else
+                target.buffTime[target.FindBuffIndex(ModContent.BuffType<Consumed>())] = 289;
         }
         public override bool PreDraw(ref Color lightColor)
         {

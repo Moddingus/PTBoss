@@ -100,7 +100,6 @@ namespace TopHatCatBoss.CatBoss
         {
             if (warningTimer > 0)
             {
-                
                 Vector2 pos = Projectile.Center - Main.screenPosition;
                 Rectangle dest = new Rectangle(((int)pos.X), ((int)pos.Y), ((int)(BEAMLEN + 20)), 2);
                 Texture2D t = TextureAssets.MagicPixel.Value;

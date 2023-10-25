@@ -37,18 +37,21 @@ namespace TopHatCatBoss.CatBoss
             Item.autoReuse = true;
 
             Item.DamageType = DamageClass.Melee;
-            Item.damage = 999999999;
-            Item.knockBack = 99999;
+            Item.damage = 1;
+            Item.knockBack = 1;
             Item.crit = 50;
 
             Item.value = Item.buyPrice(copper: 1);
             Item.rare = ItemRarityID.White;
             Item.UseSound = SoundID.Item1;
+
+            Item.shoot = ModContent.ProjectileType<BossRocket>();
+            Item.shootSpeed = 5;
         }
-        public override bool? UseItem(Player player)
+        public override bool Shoot(Player player, EntitySource_ItemUse_WithAmmo source, Vector2 position, Vector2 velocity, int type, int damage, float knockback)
         {
-            player.AddBuff(ModContent.BuffType<Consumed>(), 120);
-            return base.UseItem(player);
+            Projectile.NewProjectile(player.GetSource_FromThis(), position, velocity, type, damage, knockback);
+            return false;
         }
     }
 }
