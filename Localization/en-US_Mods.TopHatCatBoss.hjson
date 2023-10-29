@@ -26,4 +26,9 @@ Items: {
 		Tooltip: ""
 		DisplayName: Debugger
 	}
+
+	Mirror: {
+		DisplayName: Mirror
+		Tooltip: ""
+	}
 }

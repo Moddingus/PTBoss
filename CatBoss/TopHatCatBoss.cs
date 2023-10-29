@@ -304,11 +304,14 @@ namespace TopHatCatBoss.CatBoss
                                 var velocity = NPC.DirectionTo(target.Center).RotatedBy(MathHelper.Lerp(-0.3490658504f, 0.3490658504f, i / 5f)) * 15;
                                 Projectile.NewProjectile(NPC.GetSource_FromAI(), NPC.Center, velocity, ModContent.ProjectileType<Bolt>(), NPC.damage, 4f);
                             }
+                            
+                        }
+                        if (timer == 150)
+                        {
                             for (int i = 0; i < 10; ++i)
                             {
-                                var position = new Vector2(NPC.Center.X - 500 + i * 100, NPC.Center.Y - 400);
-                                var velocity = NPC.DirectionTo(target.Center).RotatedBy(MathHelper.Lerp(-0.3490658504f, 0.3490658504f, i / 5f)) * 15;
-                                Projectile.NewProjectile(NPC.GetSource_FromAI(), position, Vector2.UnitY.RotatedBy(Main.rand.NextFloat(-0.1745329252f, 0.1745329252f)) * 15, ModContent.ProjectileType<BossBullet>(), NPC.damage, 4f);
+                                var position = new Vector2(NPC.Center.X - 1000 + i * 200, NPC.Center.Y - 750);
+                                Projectile.NewProjectile(NPC.GetSource_FromAI(), position, Vector2.UnitY.RotatedBy(Main.rand.NextFloat(-0.1745329252f, 0.1745329252f)) * 30, ModContent.ProjectileType<BossBullet>(), NPC.damage, 4f, -1, 0, 120 + i*10f);
                             }
                         }
                         if (timer == 300)

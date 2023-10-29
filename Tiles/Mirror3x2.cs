@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
+using Mono.Cecil;
 using Terraria;
 using Terraria.GameContent;
 using Terraria.ID;
@@ -11,9 +12,9 @@ using Terraria.ObjectData;
 
 namespace TopHatCatBoss.Tiles
 {
-    public class _3x2Mirror : ModTile
+    public class Mirror3x2 : ModTile
     {
-        public override string Texture => "TopHatCatBoss/Tiles/3x2Mirror";
+        public override string Texture => "TopHatCatBoss/Tiles/Mirror3x2";
         public override void SetStaticDefaults()
         {
             Main.tileFrameImportant[Type] = true;
@@ -29,37 +30,28 @@ namespace TopHatCatBoss.Tiles
 
         public override void PostDraw(int i, int j, SpriteBatch spriteBatch)
         {
-            var a = Main.LocalPlayer.position;
-            MirrorDraw.Draw(spriteBatch, new(((int)a.X), ((int)a.Y), 100, 20), new Point(i, j).ToVector2());
+            var a = new Vector2(i * 16, j * 16);
+            MirrorSystem.Draw(spriteBatch, new(((int)a.X), ((int)a.Y), 48, 48), new Vector2(i * 16, j * 16));
             base.PostDraw(i, j, spriteBatch);
         }
     }
-    public static class MirrorDraw
+    public static class MirrorSystem
     {
+        
         public static void Draw(SpriteBatch spriteBatch, Rectangle mirrorSource, Vector2 mirrorTopLeft)
         {
-            foreach (NPC npc in Main.npc)
+            for (int i = 0; i < Main.maxNPCs; ++i)
             {
-                if (mirrorSource.Intersects(npc.getRect()))
+                NPC npc = Main.npc[i];
+                if (mirrorSource.Intersects(npc.getRect()) && npc.active)
                 {
-                    Texture2D texture = TextureAssets.Npc[npc.whoAmI].Value;
-                    Vector2 offset = mirrorSource.TopLeft() - mirrorTopLeft;
-                    Vector2 position = mirrorSource.TopLeft() - npc.position + offset - Main.screenPosition;
-                    Rectangle source = new(0, npc.frame.Y, npc.width, npc.height);
+                    Main.instance.LoadNPC(npc.type);
+                    Texture2D texture = TextureAssets.Npc[npc.type].Value;
+                    Rectangle source = new(0, 0, texture.Height / Main.npcFrameCount[npc.type], texture.Width);
                     SpriteEffects effects = npc.spriteDirection == -1 ? SpriteEffects.FlipHorizontally : SpriteEffects.None;
-                    spriteBatch.Draw(texture, position, source, Color.White, npc.rotation, texture.center(), npc.scale, effects, 0);
+                    spriteBatch.Draw(texture, mirrorSource.TopLeft()-Main.screenPosition, source, Color.White, npc.rotation, texture.center(), npc.scale, effects, 0);
                 }
             }
-            foreach (Projectile proj in Main.projectile)
-            {
-                if (mirrorSource.Intersects(proj.getRect()))
-                {
-                    //projectiles.Add(proj);
-                }
-            }
-
-
-            
         }
     }
 }

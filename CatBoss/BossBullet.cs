@@ -59,19 +59,37 @@ namespace TopHatCatBoss.CatBoss
             Projectile.tileCollide = false;
         }
         private ref float timer => ref Projectile.ai[0];
+        private ref float delay => ref Projectile.ai[1];
+
 
         public override bool PreAI()
         {
-            return timer > 30;
+            if (++timer < delay)
+            {
+                Projectile.Center = init;
+                return false;
+            }
+            else
+                return true;
         }
+        public override void AI()
+        {
+            if (Projectile.Center.Distance(init) >= 1500)
+            {
+                Projectile.Kill();
+            }
+        }
+        public override bool ShouldUpdatePosition() => timer > delay;
+
         public override bool PreDraw(ref Color lightColor)
         {
+            float alpha = timer / (float)((delay - 120) + 1);
             Vector2 pos = init - Main.screenPosition;
-            Rectangle dest = new Rectangle(((int)pos.X), ((int)pos.Y), ((int)(1000 - timer * 100)), 2);
+            Rectangle dest = new Rectangle(((int)pos.X), ((int)pos.Y), ((int)(1500)), 2);
             Texture2D t = TextureAssets.MagicPixel.Value;
-            Main.spriteBatch.Draw(t, dest, t.source(), Color.Red, Projectile.velocity.ToRotation(), t.center(), SpriteEffects.None, 0);
+            Main.spriteBatch.Draw(t, dest, t.source(), Color.Red * alpha, Projectile.velocity.ToRotation(), t.center(), SpriteEffects.None, 0);
 
-            return timer < 30;
+            return timer > delay;
         }
     }
 }
