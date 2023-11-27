@@ -12,14 +12,10 @@
   </ItemGroup>
   <ItemGroup>
     <None Remove="NPCs\" />
-    <None Remove="Items\" />
     <None Remove="CatBoss\Assets\" />
-    <None Remove="Tiles\" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="NPCs\" />
-    <Folder Include="Items\" />
     <Folder Include="CatBoss\Assets\" />
-    <Folder Include="Tiles\" />
   </ItemGroup>
 </Project>

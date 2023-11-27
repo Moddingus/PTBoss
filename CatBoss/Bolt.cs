@@ -34,8 +34,8 @@ namespace TopHatCatBoss.CatBoss
         public override void SetDefaults()
         {
             Projectile.penetrate = 1;
-            Projectile.width = 10;
-            Projectile.height = 10;
+            Projectile.width = 38;
+            Projectile.height = 38;
             Projectile.ignoreWater = true;
             Projectile.aiStyle = -1;
             Projectile.hostile = true;

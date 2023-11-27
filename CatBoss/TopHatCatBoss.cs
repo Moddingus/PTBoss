@@ -64,16 +64,19 @@ namespace TopHatCatBoss.CatBoss
         }
 
         private ref float timer => ref NPC.ai[0];
+        private int atkCounter = 0;
 
         private float ShaderTimer = 0;
 
         public override void SendExtraAI(BinaryWriter writer)
         {
             writer.Write(ShaderTimer);
+            writer.Write(atkCounter);
         }
         public override void ReceiveExtraAI(BinaryReader reader)
         {
             ShaderTimer = reader.Read();
+            atkCounter = reader.Read();
         }
         public override void SetStaticDefaults()
         {
@@ -241,7 +244,7 @@ namespace TopHatCatBoss.CatBoss
             if (timer > 120)
             {
                 timer = 0;
-                /*switch (Main.rand.Next(0,3))
+                switch (atkCounter)
                 {
                     case 0:
                         AtkType = AttackType.Staff;
@@ -254,9 +257,13 @@ namespace TopHatCatBoss.CatBoss
                         break;
                     default:
                         break;
-                }*/
-                AtkType = AttackType.Gun; /*ModdingusUtils.RandomFromEnum<AttackType>();*/
+                }
                 AIState = ActionState.Attack;
+                atkCounter += 1;
+                if (atkCounter > 2)
+                {
+                    atkCounter = 0;
+                }
             }
         }
         public override void ModifyNPCLoot(NPCLoot npcLoot)
@@ -278,6 +285,14 @@ namespace TopHatCatBoss.CatBoss
                             {
                                 Vector2 pos = NPC.Center + Vector2.One.RotatedBy(MathHelper.TwoPi / 12 * i + (timer / 60) / 3) * 30;
                                 Projectile.NewProjectile(NPC.GetSource_FromAI(), pos, NPC.Center.DirectionTo(pos) * 15, ModContent.ProjectileType<gss>(), 220, 5);
+                            }
+                        }
+                        if (timer % 80 == 0 && timer < 220)
+                        {
+                            for (int i = 0; i < 12; i++)
+                            {
+                                Vector2 pos = NPC.Center + Vector2.One.RotatedBy(MathHelper.TwoPi / 12 * i + (timer / 60) / 3 + 1) * 30;
+                                Projectile.NewProjectile(NPC.GetSource_FromAI(), pos, NPC.Center.DirectionTo(pos) * 20, ModContent.ProjectileType<gss>(), 220, 5);
                             }
                         }
                         if (timer == 220)

@@ -24,7 +24,6 @@ namespace TopHatCatBoss.CatBoss
 {
     public class BossBullet : ModProjectile
     {
-        public override string Texture => $"Terraria/Images/Projectile_{ProjectileID.AmethystBolt}";
 
         private Vector2 init;
         public override void OnSpawn(IEntitySource source)

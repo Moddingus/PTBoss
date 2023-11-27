@@ -72,7 +72,6 @@ namespace TopHatCatBoss.CatBoss
                     if (timer - 40 == 60 && Filters.Scene["Shockwave"].IsActive())
                     {
                         Filters.Scene.Deactivate("Shockwave");
-                        Main.NewText("deactivate");
                     }
                 }
             }
